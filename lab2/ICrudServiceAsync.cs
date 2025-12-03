@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace lab2
 {
-    interface ICrudServiceAsync<T>: IEnumerable<T>
+    public interface ICrudServiceAsync<T>: IEnumerable<T>
     {
         Task<bool> CreateAsync(T element);
         Task<T?> ReadAsync(Guid id);

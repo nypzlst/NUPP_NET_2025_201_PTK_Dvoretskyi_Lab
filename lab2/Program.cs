@@ -21,7 +21,7 @@ namespace lab2
  
             using (var scope = serviceProvider.CreateScope())
             {
-                var context = scope.ServiceProvider.GetRequiredService<UniversityContext>();
+                var context = scope.ServiceProvider.GetRequiredService<UniversityContext>();    
                 await context.Database.EnsureCreatedAsync();
             }
 
