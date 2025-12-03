@@ -8,15 +8,11 @@ namespace lab2
 {
     interface ICrudServiceAsync<T>: IEnumerable<T>
     {
-        public Task<bool> CreateAsync(T element);
-        public Task<bool> RemoveAsync(T element);
-        public Task<bool> UpdateAsync(T element);
-        public Task<bool> SaveAsync();
-
-
-        public Task<T> ReadAsync(Guid id);
-        public Task<IEnumerable<T>> ReadAllAsync();
-        public Task<IEnumerable<T>> ReadAllAsync(int page, int amount);
+        Task<bool> CreateAsync(T element);
+        Task<T?> ReadAsync(Guid id);
+        Task<IEnumerable<T>> ReadAllAsync();
+        Task<bool> UpdateAsync(T element);
+        Task<bool> RemoveAsync(T element);
 
     }
 }

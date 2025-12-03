@@ -5,77 +5,50 @@ using System.Text.Json;
 using System.Threading;
 
 public class CrudServiceAsync<T> : ICrudServiceAsync<T>
-    where T : IEntity
+    where T : class
 {
-    private readonly ConcurrentDictionary<Guid, T> _storage = new();
-    private readonly string _filePath;
-    private readonly SemaphoreSlim _semaphore = new(1, 1);
-    private readonly AutoResetEvent _autoReset = new(true);
-    private readonly object _lock = new();
+    private IRepository<T> _repository;
 
-    public CrudServiceAsync(string filePath)
+    public CrudServiceAsync(IRepository<T> repository)
     {
-        _filePath = filePath;
+        _repository = repository;
     }
 
     public async Task<bool> CreateAsync(T element)
     {
-        if (_storage.ContainsKey(element.Id)) return false;
-        _storage[element.Id] = element;
-        return await Task.FromResult(true);
+        await _repository.AddAsync(element);
+        return true;
     }
 
-    public async Task<T> ReadAsync(Guid id)
+    public IEnumerator<T> GetEnumerator()
     {
-        _storage.TryGetValue(id, out var item);
-        return await Task.FromResult(item);
+        throw new NotImplementedException();
     }
 
     public async Task<IEnumerable<T>> ReadAllAsync()
-        => await Task.FromResult(_storage.Values);
-
-    public async Task<IEnumerable<T>> ReadAllAsync(int page, int amount)
     {
-        var items = _storage.Values
-            .Skip((page - 1) * amount)
-            .Take(amount)
-            .ToList();
-        return await Task.FromResult(items);
+        return await _repository.GetAllAsync();
     }
 
-    public async Task<bool> UpdateAsync(T element)
+    public async Task<T?> ReadAsync(Guid id)
     {
-        if (!_storage.ContainsKey(element.Id)) return false;
-        _storage[element.Id] = element;
-        return await Task.FromResult(true);
+        return await _repository.GetByIdAsync(id);  
     }
 
     public async Task<bool> RemoveAsync(T element)
     {
-        return await Task.FromResult(_storage.TryRemove(element.Id, out _));
+        await _repository.Delete(element);
+        return true;
     }
 
-    public async Task<bool> SaveAsync()
+    public async Task<bool> UpdateAsync(T element)
     {
-        await _semaphore.WaitAsync();
-        try
-        {
-            _autoReset.WaitOne();
-            lock (_lock)
-            {
-                var json = JsonSerializer.Serialize(_storage.Values,
-                    new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(_filePath, json);
-            }
-            _autoReset.Set();
-            return true;
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
+        await _repository.Update(element);
+        return true;
     }
 
-    public IEnumerator<T> GetEnumerator() => _storage.Values.GetEnumerator();
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 }

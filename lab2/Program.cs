@@ -1,4 +1,8 @@
-﻿using System.Linq;
+﻿using lab2.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace lab2
@@ -7,32 +11,51 @@ namespace lab2
     {
         static async Task Main()
         {
-            string filePath = "buses.json";
-            var busService = new CrudServiceAsync<Bus>(filePath);
+            var serviceProvider = new ServiceCollection()
+            .AddDbContext<UniversityContext>(options =>
+               options.UseSqlite("Data Source=university.db")) 
+            .AddScoped(typeof(IRepository<>), typeof(Repository<>))
+            .AddScoped(typeof(ICrudServiceAsync<>), typeof(CrudServiceAsync<>))
+            .BuildServiceProvider();
 
-            int total = 1000;
-
-            Parallel.For(0, total, async i =>
+ 
+            using (var scope = serviceProvider.CreateScope())
             {
-                var bus = Bus.CreateNew();
-                await busService.CreateAsync(bus);
-            });
+                var context = scope.ServiceProvider.GetRequiredService<UniversityContext>();
+                await context.Database.EnsureCreatedAsync();
+            }
 
-            await busService.SaveAsync();
+  
+            var professorService = serviceProvider.GetRequiredService<ICrudServiceAsync<Professor>>();
+            var courseService = serviceProvider.GetRequiredService<ICrudServiceAsync<Course>>();
 
-            var all = await busService.ReadAllAsync();
+  
+            var professor = new Professor
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "John",
+                LastName = "Doe",
+                Department = "Computer Science",
+                HireDate = DateTime.Now.AddYears(-5)
+            };
+            await professorService.CreateAsync(professor);
+            Console.WriteLine($"Created Professor: {professor.LastName}");
 
-            double minSpeed = all.Min(b => b.Speed);
-            double maxSpeed = all.Max(b => b.Speed);
-            double avgSpeed = all.Average(b => b.Speed);
+            var course = new Course
+            {
+                Id = Guid.NewGuid(),
+                Title = "Entity Framework Core Basics",
+                Credits = 5,
+                ProfessorId = professor.Id
+            };
+            await courseService.CreateAsync(course);
+            Console.WriteLine($"Created Course: {course.Title} linked to {professor.LastName}");
 
-            int minCapacity = all.Min(b => b.Capacity);
-            int maxCapacity = all.Max(b => b.Capacity);
-            double avgCapacity = all.Average(b => b.Capacity);
-             
-            Console.WriteLine($"Speed: Min={minSpeed}, Max={maxSpeed}, Avg={avgSpeed:F2}");
-            Console.WriteLine($"Capacity: Min={minCapacity}, Max={maxCapacity}, Avg={avgCapacity:F2}");
-            Console.WriteLine($"Saved to: {filePath}");
+            var allProfessors = await professorService.ReadAllAsync();
+            foreach (var p in allProfessors)
+            {
+                Console.WriteLine($"Found in DB: {p.FirstName} {p.LastName}, Dept: {p.Department}");
+            }
         }
     }
 }
