@@ -1,5 +1,6 @@
 ﻿using lab2;
 using lab2.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using University.REST.Models;
 
@@ -53,6 +54,7 @@ namespace University.REST.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Librarian,Admin")]
         public async Task<ActionResult<StudentModel>> Create(Student student)
         {
             if (student.Id == Guid.Empty)
@@ -74,6 +76,7 @@ namespace University.REST.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Librarian,Admin")]
         public async Task<IActionResult> Update(Guid id, Student student)
         {
             if (id != student.Id)
@@ -92,6 +95,7 @@ namespace University.REST.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var student = await _studentService.ReadAsync(id);

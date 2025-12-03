@@ -1,5 +1,6 @@
 ﻿using lab2;
 using lab2.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using University.REST.Models;
 
@@ -17,6 +18,7 @@ namespace University.REST.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<CourseModel>>> GetAll()
         {
             var courses = await _courseService.ReadAllAsync();
@@ -49,6 +51,7 @@ namespace University.REST.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Librarian,Admin")]
         public async Task<ActionResult<CourseModel>> Create(Course course)
         {
             if (course.Id == Guid.Empty)
@@ -68,6 +71,7 @@ namespace University.REST.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Librarian,Admin")]
         public async Task<IActionResult> Update(Guid id, Course course)
         {
             if (id != course.Id)
@@ -86,6 +90,7 @@ namespace University.REST.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var course = await _courseService.ReadAsync(id);

@@ -1,4 +1,5 @@
 ﻿using lab2.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Text;
 
 namespace lab2
 {
-    public class UniversityContext : DbContext
+    public class UniversityContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<Person> People { get; set; }
         public DbSet<Student> Students { get; set; }
@@ -31,7 +32,7 @@ namespace lab2
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-             
+            base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Person>().UseTptMappingStrategy();
             modelBuilder.Entity<Student>().ToTable("Students");
             modelBuilder.Entity<Professor>().ToTable("Professors");
@@ -49,9 +50,7 @@ namespace lab2
                 .WithOne(c => c.Student)
                 .HasForeignKey<StudentCard>(c => c.StudentId);
 
-           
 
-            base.OnModelCreating(modelBuilder);
         }
     }
 }
